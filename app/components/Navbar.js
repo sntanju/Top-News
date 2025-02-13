@@ -7,7 +7,7 @@ const Navbar = () => {
 
       {/* left side */}
 
-      <div className="text-xl font-bold mx-40">
+      <div className="text-xl font-bold mx-40 underline">
         <Link href="/">HackerNews</Link>
       </div>
 
