@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 
 export default function BestNewsCard() {
   const [news, setNews] = useState([]);
@@ -21,65 +23,69 @@ export default function BestNewsCard() {
   }, []);
 
   return (
-    <div className="max-w-5xl mx-auto p-4">
-      {/* Main Card Container */}
-      <div className="border rounded-lg shadow-lg bg-white p-4">
-        {news.length > 0 ? (
-          news.map((item, index) => (
-            <div key={item.id} className="p-3">
-              {/* Single News Item */}
-              <div className="flex items-start gap-4">
-                {/* Score Number */}
-                <div className="w-10 text-right font-bold text-orange-600">{item.score}</div>
+    <>
+        <Navbar/>
+        <div className="max-w-5xl mx-auto p-4">
+        {/* Main Card Container */}
+        <div className="border rounded-lg shadow-lg bg-white p-4">
+            {news.length > 0 ? (
+            news.map((item, index) => (
+                <div key={item.id} className="p-3">
+                {/* Single News Item */}
+                <div className="flex items-start gap-4">
+                    {/* Score Number */}
+                    <div className="w-10 text-right font-bold text-orange-600">{item.score}</div>
 
-                {/* News Content */}
-                <div className="flex-1">
-                  {/* Title + URL */}
-                  <h2 className="text-lg">
-                    <a
-                      href={item.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="hover:underline hover:decoration-orange-500"
-                    >
-                      {item.title}
-                    </a>{" "}
-                    {item.url && (
-                      <span className="text-gray-600 text-sm">({new URL(item.url).hostname})</span>
-                    )}
-                  </h2>
+                    {/* News Content */}
+                    <div className="flex-1">
+                    {/* Title + URL */}
+                    <h2 className="text-lg">
+                        <a
+                        href={item.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="hover:underline hover:decoration-orange-500"
+                        >
+                        {item.title}
+                        </a>{" "}
+                        {item.url && (
+                        <span className="text-gray-600 text-sm">({new URL(item.url).hostname})</span>
+                        )}
+                    </h2>
 
-                  {/* Meta Information */}
-                  <p className="text-sm text-gray-600 mt-1">
-                    By{" "}
-                    <Link
-                      href={`/user/${item.by}`}
-                      className="mx-1 hover:underline hover:decoration-orange-500"
-                    >
-                      {item.by}
-                    </Link>
-                    |  
-                    <Link
-                      href={`/newses/${item.id}`}
-                      className="mx-1 hover:underline hover:decoration-orange-500"
-                    >
-                      {item.descendants || 0} comments
-                    </Link>
-                    |  
-                    <span className="mx-1">{timeAgo(item.time)}</span>
-                  </p>
+                    {/* Meta Information */}
+                    <p className="text-sm text-gray-600 mt-1">
+                        By{" "}
+                        <Link
+                        href={`/user/${item.by}`}
+                        className="mx-1 hover:underline hover:decoration-orange-500"
+                        >
+                        {item.by}
+                        </Link>
+                        |  
+                        <Link
+                        href={`/newses/${item.id}`}
+                        className="mx-1 hover:underline hover:decoration-orange-500"
+                        >
+                        {item.descendants || 0} comments
+                        </Link>
+                        |  
+                        <span className="mx-1">{timeAgo(item.time)}</span>
+                    </p>
+                    </div>
                 </div>
-              </div>
 
-              {/* Horizontal Line Between Items */}
-              {index !== news.length - 1 && <hr className="my-3 border-gray-300 border-t-2" />}
-            </div>
-          ))
-        ) : (
-          <p className="text-center text-gray-600">Loading best news...</p>
-        )}
-      </div>
-    </div>
+                {/* Horizontal Line Between Items */}
+                {index !== news.length - 1 && <hr className="my-3 border-gray-300 border-t-2" />}
+                </div>
+            ))
+            ) : (
+            <p className="text-center text-gray-600">Loading best news...</p>
+            )}
+        </div>
+        </div>
+        <Footer/>
+    </>
   );
 }
 
