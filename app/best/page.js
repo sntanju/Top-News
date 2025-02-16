@@ -58,14 +58,14 @@ export default function BestNewsCard() {
                         By{" "}
                         <Link
                         href={`/user/${item.by}`}
-                        className="mx-1 hover:underline hover:decoration-orange-500"
+                        className="mx-1 underline decoration-orange-500"
                         >
                         {item.by}
                         </Link>
                         |  
                         <Link
                         href={`/newses/${item.id}`}
-                        className="mx-1 hover:underline hover:decoration-orange-500"
+                        className="mx-1 underline decoration-orange-500"
                         >
                         {item.descendants || 0} comments
                         </Link>
