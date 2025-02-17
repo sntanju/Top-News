@@ -1,112 +1,128 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
 import Link from "next/link";
-import Navbar from "@/app/components/Navbar";
-import Footer from "@/app/components/Footer";
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation"; // Using useParams
 
-export default function NewsDetails() {
-  const { id } = useParams();
-  const [news, setNews] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchNews = async () => {
-      try {
-        const res = await fetch(`https://hacker-news.firebaseio.com/v0/item/${id}.json`);
-        const data = await res.json();
-        setNews(data);
-      } catch (error) {
-        console.error("Error fetching news details:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchNews();
-  }, [id]);
-
-  if (loading) return <p className="text-center">Loading news...</p>;
-  if (!news) return <p className="text-center">News not found.</p>;
-
-  return (
-    <>
-      <Navbar />
-      <div className="max-w-4xl mx-auto p-4 bg-white shadow-md rounded-lg mt-5">
-        {/* News Header */}
-        <div className="mb-4">
-          <p className="text-orange-600 font-bold text-lg">{news.score}</p>
-          <h2 className="text-lg font-semibold">
-            <a
-              href={news.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:underline hover:decoration-orange-500"
-            >
-              {news.title}
-            </a>{" "}
-            {news.url && <span className="text-gray-600 text-sm">({new URL(news.url).hostname})</span>}
-          </h2>
-
-          <p className="text-sm text-gray-600 mt-2">
-            By{" "}
-            <Link href={`/user/${news.by}`} className="hover:underline hover:decoration-orange-500">
-              {news.by}
-            </Link>{" "}
-            | {news.descendants || 0} Comments | {timeAgo(news.time)}
-          </p>
-        </div>
-
-        {/* Comments Section */}
-        <h3 className="font-semibold text-lg mb-2">Comments</h3>
-        <div className="border-t border-gray-300 pt-2">
-          {news.kids ? <CommentList commentIds={news.kids} /> : <p className="text-gray-500">No comments yet.</p>}
-        </div>
-      </div>
-      <Footer />
-    </>
-  );
+async function fetchNewsItem(id) {
+  const response = await fetch(`https://hacker-news.firebaseio.com/v0/item/${id}.json`);
+  return response.json();
 }
 
-// Function to format time ago
 function timeAgo(timestamp) {
   const seconds = Math.floor((Date.now() - timestamp * 1000) / 1000);
   const hours = Math.floor(seconds / 3600);
   return `${hours} hours ago`;
 }
 
-// Component to Fetch and Display Comments
-const CommentList = ({ commentIds }) => {
+export default function NewsDetails() {
+  const { id } = useParams(); // Fix for Next.js param handling
+  const [news, setNews] = useState(null);
   const [comments, setComments] = useState([]);
 
   useEffect(() => {
-    const fetchComments = async () => {
-      const commentData = await Promise.all(commentIds.map(fetchComment));
-      setComments(commentData.filter(comment => comment && !comment.deleted));
+    const fetchData = async () => {
+      try {
+        const newsItem = await fetchNewsItem(id);
+        if (!newsItem) return;
+
+        setNews(newsItem);
+
+        if (newsItem.kids && newsItem.kids.length > 0) {
+          const mainComments = await Promise.all(newsItem.kids.map(fetchNewsItem));
+          setComments(mainComments.filter((comment) => comment !== null));
+        }
+      } catch (error) {
+        console.error("Error fetching news:", error);
+      }
     };
-    fetchComments();
-  }, [commentIds]);
+
+    if (id) {
+      fetchData();
+    }
+  }, [id]);
+
+  if (!news) return <p className="text-center">Loading...</p>;
 
   return (
-    <div>
-      {comments.map(comment => (
-        <div key={comment.id} className="p-3 border-b border-gray-300">
-          <p className="text-sm text-gray-600">
-            <Link href={`/user/${comment.by}`} className="hover:underline hover:decoration-orange-500">
-              {comment.by}
-            </Link>{" "}
-            | {timeAgo(comment.time)} | {comment.kids ? `${comment.kids.length} Replies` : "No Replies"}
-          </p>
-          <div className="text-gray-800 mt-1 text-sm" dangerouslySetInnerHTML={{ __html: comment.text }}></div>
+    <div className="max-w-5xl mx-auto p-4">
+      {/* News Card */}
+      <div className="border rounded-lg shadow-lg bg-white p-4">
+        <div className="flex items-start gap-4">
+          {/* Score (Added back) */}
+          <div className="w-10 text-right font-bold text-orange-600 mt-5">{news.score}</div>
+
+          {/* News Content */}
+          <div className="flex-1">
+            <h2 className="text-lg">
+              <a href={news.url} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                {news.title}
+              </a>
+            </h2>
+            <p className="text-sm text-gray-600">
+              By{" "}
+              <Link href={`/user/${news.by}`} className="underline text-orange-500">
+                {news.by}
+              </Link>{" "}
+              | {comments.length}
+              {" Comments "}
+              | {" Created "} {timeAgo(news.time)}
+            </p>
+          </div>
         </div>
-      ))}
+      </div>
+
+      {/* Comments Card */}
+      <div className="mt-6 border rounded-lg shadow-lg bg-white p-4">
+        {/* <h3 className="text-lg font-bold mb-3">{comments.length} Comments</h3> */}
+        {comments.length > 0 ? (
+          comments.map((comment) => <CommentItem key={comment.id} comment={comment} />)
+        ) : (
+          <p className="text-gray-600">No comments yet.</p>
+        )}
+      </div>
     </div>
   );
-};
+}
 
-// Fetch individual comment
-async function fetchComment(id) {
-  const response = await fetch(`https://hacker-news.firebaseio.com/v0/item/${id}.json`);
-  const data = await response.json();
-  return data;
+function CommentItem({ comment }) {
+  const [replies, setReplies] = useState([]);
+  const [showReplies, setShowReplies] = useState(false);
+
+  useEffect(() => {
+    const loadReplies = async () => {
+      if (comment.kids && comment.kids.length > 0) {
+        const replyData = await Promise.all(comment.kids.map(fetchNewsItem));
+        setReplies(replyData.filter((reply) => reply !== null));
+      }
+    };
+
+    if (showReplies && replies.length === 0) {
+      loadReplies();
+    }
+  }, [showReplies]);
+
+  return (
+    <div className=" pl-4 mt-3">
+      <p className="text-sm text-gray-600">
+        <Link href={`/user/${comment.by}`} className="underline text-orange-500">
+          {comment.by}
+        </Link>{" "}
+        | {timeAgo(comment.time)}
+      </p>
+      <div className="mt-1 text-gray-900" dangerouslySetInnerHTML={{ __html: comment.text }} />
+
+      {comment.kids && comment.kids.length > 0 && (
+        <button
+          onClick={() => setShowReplies(!showReplies)}
+          className="mt-2 text-sm text-orange-500 underline"
+        >
+          {showReplies ? "Hide Replies" : `Show Replies (${comment.kids.length})`}
+        </button>
+      )}
+
+      {showReplies &&
+        replies.map((reply) => <CommentItem key={reply.id} comment={reply} />)}
+    </div>
+  );
 }
