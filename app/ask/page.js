@@ -8,12 +8,16 @@ import Footer from "@/app/components/Footer";
 const AskNewsPage = () => {
   const [news, setNews] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
+  const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
     const fetchNews = async () => {
       try {
-        const ids = await fetchAskNewsIds();  // Fetch Ask HN story IDs
-        const newsItems = await Promise.all(ids.map(fetchNewsItem));
+        const ids = await fetchAskNewsIds(); // Fetch Ask HN story IDs
+        setTotalPages(Math.ceil(ids.length / itemsPerPage));
+        const newsItems = await Promise.all(ids.slice(0, itemsPerPage).map(fetchNewsItem));
         setNews(newsItems);
       } catch (error) {
         console.error("Error fetching news:", error);
@@ -24,6 +28,29 @@ const AskNewsPage = () => {
 
     fetchNews();
   }, []);
+
+  useEffect(() => {
+    const fetchPageNews = async () => {
+      const ids = await fetchAskNewsIds();
+      const start = (currentPage - 1) * itemsPerPage;
+      const end = start + itemsPerPage;
+      const newsItems = await Promise.all(ids.slice(start, end).map(fetchNewsItem));
+      setNews(newsItems);
+    };
+    fetchPageNews();
+  }, [currentPage]);
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
 
   return (
     <>
@@ -88,6 +115,25 @@ const AskNewsPage = () => {
             <p className="text-center text-gray-600">No news found.</p>
           )}
         </div>
+
+        {/* Pagination Controls */}
+        <div className="flex justify-center items-center mt-4 space-x-4">
+          <button
+            onClick={handlePrevPage}
+            disabled={currentPage === 1}
+            className="px-3 py-1 bg-gray-300 rounded disabled:opacity-50"
+          >
+            &lt;
+          </button>
+          <span>{currentPage}/{totalPages}</span>
+          <button
+            onClick={handleNextPage}
+            disabled={currentPage === totalPages}
+            className="px-3 py-1 bg-gray-300 rounded disabled:opacity-50"
+          >
+            &gt;
+          </button>
+        </div>
       </div>
 
       <Footer />
@@ -99,7 +145,7 @@ const AskNewsPage = () => {
 async function fetchAskNewsIds() {
   const response = await fetch("https://hacker-news.firebaseio.com/v0/askstories.json");
   const ids = await response.json();
-  return ids.slice(0, 10); // Get only the first 10 items
+  return ids;  
 }
 
 // Function to fetch individual news details using ID

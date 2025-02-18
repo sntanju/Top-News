@@ -7,12 +7,18 @@ import Footer from "../components/Footer";
 
 export default function BestNewsCard() {
   const [news, setNews] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
+  const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
     const fetchNews = async () => {
       try {
         const ids = await fetchBestNewsIds();
-        const newsItems = await Promise.all(ids.map(fetchNewsItem));
+        //const newsItems = await Promise.all(ids.map(fetchNewsItem));
+        //const ids = await fetchAskNewsIds(); // Fetch Ask HN story IDs
+        setTotalPages(Math.ceil(ids.length / itemsPerPage));
+        const newsItems = await Promise.all(ids.slice(0, itemsPerPage).map(fetchNewsItem));
         setNews(newsItems);
       } catch (error) {
         console.error("Error fetching best news:", error);
@@ -21,6 +27,30 @@ export default function BestNewsCard() {
 
     fetchNews();
   }, []);
+
+  useEffect(() => {
+    const fetchPageNews = async () => {
+      const ids = await fetchBestNewsIds();
+      const start = (currentPage - 1) * itemsPerPage;
+      const end = start + itemsPerPage;
+      const newsItems = await Promise.all(ids.slice(start, end).map(fetchNewsItem));
+      setNews(newsItems);
+    };
+    fetchPageNews();
+  }, [currentPage]);
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
 
   return (
     <>
@@ -83,6 +113,26 @@ export default function BestNewsCard() {
             <p className="text-center text-gray-600">Loading best news...</p>
             )}
         </div>
+
+         {/* Pagination Controls */}
+         <div className="flex justify-center items-center mt-4 space-x-4">
+          <button
+            onClick={handlePrevPage}
+            disabled={currentPage === 1}
+            className="px-3 py-1 bg-gray-300 rounded disabled:opacity-50"
+          >
+            &lt;
+          </button>
+          <span>{currentPage}/{totalPages}</span>
+          <button
+            onClick={handleNextPage}
+            disabled={currentPage === totalPages}
+            className="px-3 py-1 bg-gray-300 rounded disabled:opacity-50"
+          >
+            &gt;
+          </button>
+        </div>
+
         </div>
         <Footer/>
     </>
@@ -93,7 +143,7 @@ export default function BestNewsCard() {
 async function fetchBestNewsIds() {
   const response = await fetch("https://hacker-news.firebaseio.com/v0/beststories.json");
   const ids = await response.json();
-  return ids.slice(0, 10); // Get only the first 10 items
+  return ids;  
 }
 
 // Function to fetch individual news details using ID
