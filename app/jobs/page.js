@@ -8,12 +8,16 @@ import Footer from "@/app/components/Footer";
 const JobNewsPage = () => {
   const [news, setNews] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
+  const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
     const fetchNews = async () => {
       try {
-        const ids = await fetchJobNewsIds();  // Fetch Job HN story IDs
-        const newsItems = await Promise.all(ids.map(fetchNewsItem));
+        const ids = await fetchJobNewsIds();
+        setTotalPages(Math.ceil(ids.length / itemsPerPage));
+        const newsItems = await Promise.all(ids.slice(0, itemsPerPage).map(fetchNewsItem));
         setNews(newsItems);
       } catch (error) {
         console.error("Error fetching news:", error);
@@ -21,9 +25,31 @@ const JobNewsPage = () => {
         setLoading(false);
       }
     };
-
     fetchNews();
   }, []);
+
+  useEffect(() => {
+    const fetchPageNews = async () => {
+      const ids = await fetchJobNewsIds();
+      const start = (currentPage - 1) * itemsPerPage;
+      const end = start + itemsPerPage;
+      const newsItems = await Promise.all(ids.slice(start, end).map(fetchNewsItem));
+      setNews(newsItems);
+    };
+    fetchPageNews();
+  }, [currentPage]);
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
 
   return (
     <>
@@ -40,7 +66,6 @@ const JobNewsPage = () => {
                 <div className="flex items-start gap-4">
                   {/* Score Number */}
                   <div className="w-10 text-right font-bold text-orange-600">{item.score}</div>
-
                   {/* News Content */}
                   <div className="flex-1">
                     {/* Title + URL */}
@@ -57,7 +82,6 @@ const JobNewsPage = () => {
                         <span className="text-gray-600 text-sm">({new URL(item.url).hostname})</span>
                       )}
                     </h2>
-
                     {/* Meta Information */}
                     <p className="text-sm text-gray-600 mt-1">
                       By{" "}
@@ -79,7 +103,6 @@ const JobNewsPage = () => {
                     </p>
                   </div>
                 </div>
-
                 {/* Horizontal Line Between Items */}
                 {index !== news.length - 1 && <hr className="my-3 border-gray-300 border-t-2" />}
               </div>
@@ -88,8 +111,25 @@ const JobNewsPage = () => {
             <p className="text-center text-gray-600">No news found.</p>
           )}
         </div>
+        {/* Pagination Controls */}
+        <div className="flex justify-center items-center mt-4 space-x-4">
+          <button
+            onClick={handlePrevPage}
+            disabled={currentPage === 1}
+            className="px-3 py-1 bg-gray-300 rounded disabled:opacity-50"
+          >
+            &lt;
+          </button>
+          <span>{currentPage}/{totalPages}</span>
+          <button
+            onClick={handleNextPage}
+            disabled={currentPage === totalPages}
+            className="px-3 py-1 bg-gray-300 rounded disabled:opacity-50"
+          >
+            &gt;
+          </button>
+        </div>
       </div>
-
       <Footer />
     </>
   );
@@ -99,7 +139,7 @@ const JobNewsPage = () => {
 async function fetchJobNewsIds() {
   const response = await fetch("https://hacker-news.firebaseio.com/v0/jobstories.json");
   const ids = await response.json();
-  return ids.slice(0, 10); // Get only the first 10 items
+  return ids;
 }
 
 // Function to fetch individual news details using ID
