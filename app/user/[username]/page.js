@@ -26,7 +26,7 @@ const UserDetails = () => {
     fetchUser();
   }, [username]);
 
-  if (loading) return <p className="text-center">Loading user details...</p>;
+  if (loading) return <p className="text-center">Loading...</p>;
   if (!user) return <p className="text-center">User not found.</p>;
 
   return (

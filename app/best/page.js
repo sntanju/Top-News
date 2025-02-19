@@ -110,7 +110,7 @@ export default function BestNewsCard() {
                 </div>
             ))
             ) : (
-            <p className="text-center text-gray-600">Loading best news...</p>
+            <p className="text-center text-gray-600">Loading...</p>
             )}
         </div>
 

@@ -79,7 +79,7 @@ export default function NewsCard() {
             </div>
           ))
         ) : (
-          <p className="text-center text-gray-600">Loading news...</p>
+          <p className="text-center text-gray-600">Loading...</p>
         )}
       </div>
 

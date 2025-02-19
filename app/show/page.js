@@ -50,7 +50,7 @@ const BestNewsPage = () => {
         {/* Main Card Container */}
         <div className="border rounded-lg shadow-lg bg-white p-4">
           {loading ? (
-            <p className="text-center text-gray-600">Loading news...</p>
+            <p className="text-center text-gray-600">Loading...</p>
           ) : news.length > 0 ? (
             news.map((item, index) => (
               <div key={item.id} className="p-3">
